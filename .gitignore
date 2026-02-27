@@ -60,4 +60,4 @@ data/processed/*
 artifacts/tuning/*
 !artifacts/tuning/.gitkeep
 artifacts/run_config.json
-artifacts/contributions/media_contributions_train.parquet
+artifacts/**/*.parquet

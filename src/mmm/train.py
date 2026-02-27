@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from mmm.data_io import run_data_pipeline
@@ -16,6 +17,9 @@ from mmm.contributions import compute_contributions
 from mmm.roas import compute_roas
 from mmm.plotting import plot_roas, plot_baseline_vs_media
 from mmm.decomposition import compute_baseline_vs_media
+from mmm.scenario import simulate_scenario, summarize_delta
+from mmm.response_curves import compute_response_curve
+from mmm.plotting import plot_response_curve
 
 
 def _ensure_dir(p: Path) -> None:
@@ -197,6 +201,56 @@ def run_train(cfg: dict, *, project_root: Path) -> None:
     _ensure_dir(fig_dir)
     plot_roas(roas_df, fig_dir / "roas.png")
 
+    # --- 5) Scenario simulation ---
+    scenario_delta = simulate_scenario(
+        fit_res.idata,
+        train_df,
+        date_col=date_col,
+        target_col=target_col,
+        channel_cols=channel_cols,
+        control_cols=control_cols,
+        adstock_decay=best_decays,
+        seasonal_order=seasonal_order,
+        target_transform=target_transform,
+        multipliers={"mdsp_so": 1.2, "mdsp_vidtr": 0.9},  # exemple
+    )
+
+    scenario_summary = summarize_delta(scenario_delta)
+
+    scenario_dir = artifacts_dir / "scenarios"
+    _ensure_dir(scenario_dir)
+
+    (scenario_dir / "scenario_1.json").write_text(
+        json.dumps(scenario_summary, indent=2),
+        encoding="utf-8",
+    )
+
+    # --- 6) Response curves ---
+    curves_dir = artifacts_dir / "response_curves"
+    _ensure_dir(curves_dir)
+    fig_dir = artifacts_dir / "figures"
+    _ensure_dir(fig_dir)
+
+    grid = np.array([0.0, 0.5, 0.8, 1.0, 1.2, 1.5, 2.0], dtype=float)
+
+    for ch in channel_cols:
+        curve_df = compute_response_curve(
+            fit_res.idata,
+            train_df,
+            date_col=date_col,
+            target_col=target_col,
+            channel_cols=channel_cols,
+            control_cols=control_cols,
+            adstock_decay=best_decays,
+            channel=ch,
+            grid=grid,
+            grid_type="multiplier",
+            seasonal_order=seasonal_order,
+            target_transform=target_transform,
+        )
+        curve_df.to_parquet(curves_dir / f"response_curve_{ch}.parquet", index=False)
+        plot_response_curve(curve_df, save_path=str(fig_dir / f"response_curve_{ch}.png"))
+    
     # Also save the exact config used (repro)
     (artifacts_dir / "run_config.json").write_text(json.dumps(cfg, indent=2), encoding="utf-8")
 

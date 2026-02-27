@@ -64,3 +64,29 @@ def plot_baseline_vs_media(
     plt.tight_layout()
     plt.savefig(save_path)
     plt.close()
+
+def plot_response_curve(df: pd.DataFrame, *, save_path: str) -> None:
+    """
+    Expects columns: spend_total, uplift_total_median, uplift_total_hdi_low, uplift_total_hdi_high
+    """
+    d = df.sort_values("spend_total")
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(d["spend_total"], d["uplift_total_median"], label="median uplift")
+
+    plt.fill_between(
+        d["spend_total"],
+        d["uplift_total_hdi_low"],
+        d["uplift_total_hdi_high"],
+        alpha=0.2,
+        label="90% credible interval",
+    )
+
+    plt.axhline(0, linestyle="--")
+    plt.xlabel("Total spend (scenario period)")
+    plt.ylabel("Incremental sales (scenario - baseline)")
+    plt.title(f"Response curve — {d['channel'].iloc[0]}")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.close()
