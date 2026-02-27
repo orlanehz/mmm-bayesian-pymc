@@ -56,7 +56,11 @@ def fit_mmm(
             var_names=["y_obs"],
             random_seed=random_seed,
             progressbar=False,
+            extend_inferencedata=True,
         )
+        
+        if not hasattr(idata, "posterior"):
+            raise RuntimeError("Posterior group missing from InferenceData after sampling.")
 
     return FitResult(idata=idata, feature_names=dm.feature_names)
 

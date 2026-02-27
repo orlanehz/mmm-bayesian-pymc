@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
 from pathlib import Path
 
 import pandas as pd
 
 from mmm.data_io import run_data_pipeline
 from mmm.model import fit_mmm, save_fit_result
-from mmm.evaluation import evaluate_fit
+from mmm.evaluation import evaluate_fit, evaluate_predictions
 from mmm.features import build_design_matrix
 from mmm.split import time_split
 from mmm.tuning import tune_adstock_decays
+from mmm.predict import posterior_predictive_normal_linear, pp_mean
+from mmm.contributions import compute_contributions
 
 
 def _ensure_dir(p: Path) -> None:
@@ -22,6 +23,9 @@ def run_train(cfg: dict, *, project_root: Path) -> None:
     # ---------- Paths ----------
     artifacts_dir = project_root / cfg["artifacts"]["dir"]
     _ensure_dir(artifacts_dir)
+
+    metrics_dir = artifacts_dir / "metrics"
+    _ensure_dir(metrics_dir)
 
     # ---------- 1) Data pipeline (public weekly -> derived daily -> weekly processed) ----------
     data_artifacts = run_data_pipeline(config=cfg, project_root=project_root)
@@ -133,17 +137,26 @@ def run_train(cfg: dict, *, project_root: Path) -> None:
     # ---------- 4) Evaluate (train & test) ----------
     metrics_train = evaluate_fit(dm_train, fit_res.idata, target_transform=target_transform)
 
-    # For test, we need posterior predictive for test X:
-    # v1 (simple): re-fit posterior predictive on test by rebuilding mu and sampling
-    # For now: we do a pragmatic approach: compute mu from posterior mean betas (deterministic)
-    # -> keeps pipeline simple; we’ll add full posterior predictive on test in v2.
-    # We'll still compute metrics in a consistent way:
-    metrics = {"train": metrics_train}
+    # --- Test posterior predictive (using posterior draws from the trained model) ---
+    pp_test = posterior_predictive_normal_linear(fit_res.idata, dm_test.X, random_seed=42)
+    y_pred_test_t = pp_mean(pp_test)
+    metrics_test = evaluate_predictions(dm_test.y, y_pred_test_t, target_transform=target_transform)
+
+    metrics = {"train": metrics_train, "test": metrics_test}
 
     # Save metrics
-    metrics_dir = artifacts_dir / "metrics"
-    _ensure_dir(metrics_dir)
     (metrics_dir / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+
+    # --- Contributions (train) ---
+    contrib_df = compute_contributions(
+        fit_res.idata,
+        dm_train.X,
+        fit_res.feature_names,
+        hdi_prob=0.9,
+    )
+    contrib_dir = artifacts_dir / "contributions"
+    _ensure_dir(contrib_dir)
+    contrib_df.to_parquet(contrib_dir / "media_contributions_train.parquet", index=False)
 
     # Also save the exact config used (repro)
     (artifacts_dir / "run_config.json").write_text(json.dumps(cfg, indent=2), encoding="utf-8")
@@ -152,3 +165,4 @@ def run_train(cfg: dict, *, project_root: Path) -> None:
     print(f"Artifacts saved to: {artifacts_dir}")
     print(f"Best decays: {best_decays}")
     print(f"Train metrics: {metrics_train}")
+    print(f"Test metrics: {metrics_test}")

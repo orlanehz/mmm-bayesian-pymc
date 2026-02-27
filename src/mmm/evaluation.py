@@ -56,3 +56,18 @@ def evaluate_fit(
         }
     )
     return metrics
+
+def evaluate_predictions(
+    y_true_t: np.ndarray,
+    y_pred_t: np.ndarray,
+    *,
+    target_transform: str,
+) -> dict[str, float]:
+    metrics = {
+        "rmse_transformed": rmse(y_true_t, y_pred_t),
+        "mape_transformed": mape(y_true_t, y_pred_t),
+    }
+    y_true = invert_target_transform(y_true_t, target_transform)
+    y_pred = invert_target_transform(y_pred_t, target_transform)
+    metrics.update({"rmse": rmse(y_true, y_pred), "mape": mape(y_true, y_pred)})
+    return metrics
