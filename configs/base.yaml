@@ -77,3 +77,10 @@ tuning:
   decay_candidates: [0.0, 0.2, 0.4, 0.6]
   metric: "rmse"
   ridge_alpha: 1.0
+
+features:
+  seasonal_order: 3
+  adstock:
+    l_max: 8
+  saturation: "logistic"
+  target_transform: "log1p"
