@@ -13,6 +13,9 @@ from mmm.split import time_split
 from mmm.tuning import tune_adstock_decays
 from mmm.predict import posterior_predictive_normal_linear, pp_mean
 from mmm.contributions import compute_contributions
+from mmm.roas import compute_roas
+from mmm.plotting import plot_roas, plot_baseline_vs_media
+from mmm.decomposition import compute_baseline_vs_media
 
 
 def _ensure_dir(p: Path) -> None:
@@ -144,6 +147,26 @@ def run_train(cfg: dict, *, project_root: Path) -> None:
 
     metrics = {"train": metrics_train, "test": metrics_test}
 
+    # Baseline vs Media decomposition (train)
+    decomp_df = compute_baseline_vs_media(
+        fit_res.idata,
+        dm_train.X,
+        fit_res.feature_names,
+        dates=train_df[date_col],
+        hdi_prob=0.9,
+    )
+
+    decomp_dir = artifacts_dir / "decomposition"
+    _ensure_dir(decomp_dir)
+    decomp_df.to_parquet(decomp_dir / "baseline_vs_media_train.parquet", index=False)
+
+    fig_dir = artifacts_dir / "figures"
+    _ensure_dir(fig_dir)
+    plot_baseline_vs_media(
+        decomp_df,
+        save_path=str(fig_dir / "baseline_vs_media_train.png"),
+    )
+
     # Save metrics
     (metrics_dir / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 
@@ -157,6 +180,22 @@ def run_train(cfg: dict, *, project_root: Path) -> None:
     contrib_dir = artifacts_dir / "contributions"
     _ensure_dir(contrib_dir)
     contrib_df.to_parquet(contrib_dir / "media_contributions_train.parquet", index=False)
+
+    roas_df = compute_roas(
+    fit_res.idata,
+    dm_train.X,
+    train_df[channel_cols],
+    fit_res.feature_names,
+    channel_cols,
+)
+    # --- ROAS summary + plot ---
+    roas_dir = artifacts_dir / "roas"
+    _ensure_dir(roas_dir)
+    roas_df.to_parquet(roas_dir / "roas_summary.parquet", index=False)
+
+    fig_dir = artifacts_dir / "figures"
+    _ensure_dir(fig_dir)
+    plot_roas(roas_df, fig_dir / "roas.png")
 
     # Also save the exact config used (repro)
     (artifacts_dir / "run_config.json").write_text(json.dumps(cfg, indent=2), encoding="utf-8")
