@@ -49,3 +49,14 @@ artifacts/figures/*
 !artifacts/inference/.gitkeep
 !artifacts/metrics/.gitkeep
 !artifacts/figures/.gitkeep
+
+# Data files (generated / local)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Tuning artifacts (generated)
+artifacts/tuning/*
+!artifacts/tuning/.gitkeep
+artifacts/run_config.json
