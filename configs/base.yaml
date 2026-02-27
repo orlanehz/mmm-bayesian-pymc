@@ -6,8 +6,74 @@ paths:
   processed_data: data/processed
   artifacts: artifacts
 
-model:
-  target: sales
-  date_col: date
-  channel_cols: []
-  control_cols: []
+# Data pipeline configuration
+# - We ingest a public dataset (weekly in source)
+# - We derive a daily raw table (to demonstrate realistic ingestion / ETL)
+# - We aggregate back to weekly for MMM modeling
+
+data:
+  source: public_pymc_case_study
+  # Keep this URL in one place so the pipeline is reproducible.
+  source_url: "https://raw.githubusercontent.com/sibylhe/mmm_stan/main/data.csv"
+
+  # Source schema (as provided by the public dataset)
+  source_date_col: "wk_strt_dt"
+  source_target_col: "sales"
+  source_channel_cols:
+    - mdsp_tv
+    - mdsp_radio
+    - mdsp_online
+    - mdsp_social
+  source_control_cols:
+    - hldy_1
+    - hldy_2
+
+  # Derived daily table (for realism / engineering demonstration)
+  derive_daily:
+    enabled: true
+    # How to distribute weekly values into daily rows.
+    # - "uniform": split equally across 7 days
+    # - "weekday_weighted": heavier Mon-Fri (implemented later if desired)
+    distribution: "uniform"
+
+  # Weekly modeling table (final processed dataset)
+  aggregate_to_weekly:
+    enabled: true
+    week_start: "MON"  # MON or SUN
+
+  # Final processed schema (what modeling code expects)
+  processed_date_col: "date"
+  processed_target_col: "sales"
+  processed_channel_cols:
+    - mdsp_tv
+    - mdsp_radio
+    - mdsp_online
+    - mdsp_social
+  processed_control_cols:
+    - hldy_1
+    - hldy_2
+
+features:
+  adstock:
+    l_max: 8
+  saturation: "logistic"
+  target_transform: "log1p"
+
+split:
+  test_size: 0.2
+
+training:
+  fast_mode: true
+  draws: 300
+  tune: 300
+  chains: 2
+  target_accept: 0.9
+
+artifacts:
+  dir: artifacts
+
+tuning:
+  enabled: true
+  decay_candidates: [0.0, 0.2, 0.4, 0.6]
+  metric: "rmse"
+  ridge_alpha: 1.0
