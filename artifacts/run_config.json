@@ -1,0 +1,78 @@
+{
+  "project": {
+    "name": "mmm-bayesian-pymc"
+  },
+  "paths": {
+    "raw_data": "data/raw",
+    "processed_data": "data/processed",
+    "artifacts": "artifacts"
+  },
+  "data": {
+    "source": "public_pymc_case_study",
+    "source_url": "https://raw.githubusercontent.com/sibylhe/mmm_stan/main/data.csv",
+    "source_date_col": "wk_strt_dt",
+    "source_target_col": "sales",
+    "source_channel_cols": [
+      "mdsp_dm",
+      "mdsp_inst",
+      "mdsp_nsp",
+      "mdsp_on"
+    ],
+    "source_control_cols": [
+      "me_ics_all",
+      "me_gas_dpg"
+    ],
+    "derive_daily": {
+      "enabled": true,
+      "distribution": "uniform"
+    },
+    "aggregate_to_weekly": {
+      "enabled": true,
+      "week_start": "MON"
+    },
+    "processed_date_col": "date",
+    "processed_target_col": "sales",
+    "processed_channel_cols": [
+      "mdsp_dm",
+      "mdsp_inst",
+      "mdsp_nsp",
+      "mdsp_on"
+    ],
+    "processed_control_cols": [
+      "me_ics_all",
+      "me_gas_dpg"
+    ]
+  },
+  "features": {
+    "seasonal_order": 3,
+    "adstock": {
+      "l_max": 8
+    },
+    "saturation": "logistic",
+    "target_transform": "log1p"
+  },
+  "split": {
+    "test_size": 0.2
+  },
+  "training": {
+    "fast_mode": true,
+    "draws": 300,
+    "tune": 300,
+    "chains": 2,
+    "target_accept": 0.9
+  },
+  "artifacts": {
+    "dir": "artifacts"
+  },
+  "tuning": {
+    "enabled": true,
+    "decay_candidates": [
+      0.0,
+      0.2,
+      0.4,
+      0.6
+    ],
+    "metric": "rmse",
+    "ridge_alpha": 1.0
+  }
+}

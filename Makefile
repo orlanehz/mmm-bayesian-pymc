@@ -11,3 +11,6 @@ format:
 
 test:
 	poetry run pytest -q
+
+train:
+	poetry run mmm train --config configs/base.yaml

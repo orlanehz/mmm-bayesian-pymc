@@ -20,13 +20,13 @@ data:
   source_date_col: "wk_strt_dt"
   source_target_col: "sales"
   source_channel_cols:
-    - mdsp_tv
-    - mdsp_radio
-    - mdsp_online
-    - mdsp_social
+    - mdsp_dm
+    - mdsp_inst
+    - mdsp_nsp
+    - mdsp_on
   source_control_cols:
-    - hldy_1
-    - hldy_2
+    - me_ics_all
+    - me_gas_dpg
 
   # Derived daily table (for realism / engineering demonstration)
   derive_daily:
@@ -45,13 +45,13 @@ data:
   processed_date_col: "date"
   processed_target_col: "sales"
   processed_channel_cols:
-    - mdsp_tv
-    - mdsp_radio
-    - mdsp_online
-    - mdsp_social
+    - mdsp_dm
+    - mdsp_inst
+    - mdsp_nsp
+    - mdsp_on
   processed_control_cols:
-    - hldy_1
-    - hldy_2
+    - me_ics_all
+    - me_gas_dpg
 
 features:
   adstock:
