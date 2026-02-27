@@ -18,10 +18,7 @@
       "mdsp_nsp",
       "mdsp_on"
     ],
-    "source_control_cols": [
-      "me_ics_all",
-      "me_gas_dpg"
-    ],
+    "source_control_cols": [],
     "derive_daily": {
       "enabled": true,
       "distribution": "uniform"
@@ -38,10 +35,7 @@
       "mdsp_nsp",
       "mdsp_on"
     ],
-    "processed_control_cols": [
-      "me_ics_all",
-      "me_gas_dpg"
-    ]
+    "processed_control_cols": []
   },
   "features": {
     "seasonal_order": 3,

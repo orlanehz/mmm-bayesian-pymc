@@ -24,9 +24,8 @@ data:
     - mdsp_inst
     - mdsp_nsp
     - mdsp_on
-  source_control_cols:
-    - me_ics_all
-    - me_gas_dpg
+  source_control_cols: []
+
 
   # Derived daily table (for realism / engineering demonstration)
   derive_daily:
@@ -49,11 +48,10 @@ data:
     - mdsp_inst
     - mdsp_nsp
     - mdsp_on
-  processed_control_cols:
-    - me_ics_all
-    - me_gas_dpg
+  processed_control_cols: []
 
 features:
+  seasonal_order: 3
   adstock:
     l_max: 8
   saturation: "logistic"
@@ -77,10 +75,3 @@ tuning:
   decay_candidates: [0.0, 0.2, 0.4, 0.6]
   metric: "rmse"
   ridge_alpha: 1.0
-
-features:
-  seasonal_order: 3
-  adstock:
-    l_max: 8
-  saturation: "logistic"
-  target_transform: "log1p"

@@ -28,6 +28,10 @@ def _ensure_datetime(df: pd.DataFrame, col: str) -> pd.DataFrame:
     return out
 
 
+def _detect_holiday_controls(columns: list[str]) -> list[str]:
+    return [col for col in columns if "hldy_" in col]
+
+
 def derive_daily_from_weekly_uniform(
     weekly_df: pd.DataFrame,
     week_start_col: str,
@@ -112,17 +116,23 @@ def run_data_pipeline(
     src_date = data_cfg["source_date_col"]
     src_target = data_cfg["source_target_col"]
     src_channels = list(data_cfg["source_channel_cols"])
-    src_controls = list(data_cfg["source_control_cols"])
+    src_controls = list(data_cfg.get("source_control_cols", []))
 
     processed_date = data_cfg["processed_date_col"]
     processed_target = data_cfg["processed_target_col"]
     processed_channels = list(data_cfg["processed_channel_cols"])
-    processed_controls = list(data_cfg["processed_control_cols"])
+    processed_controls = list(data_cfg.get("processed_control_cols", []))
 
     # 1) Download weekly source
     weekly = download_weekly_source(url)
     weekly = _ensure_datetime(weekly, src_date)
     weekly = weekly.sort_values(src_date).reset_index(drop=True)
+
+    # Optional auto-detection for holiday controls.
+    if not src_controls:
+        src_controls = _detect_holiday_controls(list(weekly.columns))
+    if not processed_controls:
+        processed_controls = list(src_controls)
 
     weekly_source_csv = raw_dir / "weekly_source.csv"
     weekly.to_csv(weekly_source_csv, index=False)

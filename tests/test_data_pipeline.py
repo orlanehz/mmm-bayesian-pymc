@@ -63,3 +63,44 @@ def test_daily_weekly_invariants(tmp_path: Path):
     assert weekly_model["date"].is_monotonic_increasing
     assert weekly_model["date"].is_unique
     assert len(weekly_model) == len(weekly)
+
+
+def test_auto_detect_hldy_controls_when_config_lists_are_empty(tmp_path: Path):
+    weekly = pd.DataFrame(
+        {
+            "wk_strt_dt": pd.to_datetime(["2024-01-01", "2024-01-08"]),
+            "sales": [700.0, 1400.0],
+            "mdsp_tv": [70.0, 140.0],
+            "mdsp_social": [7.0, 14.0],
+            "hldy_1": [0, 1],
+            "hldy_2": [0, 0],
+        }
+    )
+
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    local_csv = raw_dir / "local_source.csv"
+    weekly.to_csv(local_csv, index=False)
+
+    cfg = {
+        "paths": {"raw_data": "data/raw", "processed_data": "data/processed", "artifacts": "artifacts"},
+        "data": {
+            "source_url": local_csv.as_posix(),
+            "source_date_col": "wk_strt_dt",
+            "source_target_col": "sales",
+            "source_channel_cols": ["mdsp_tv", "mdsp_social"],
+            "source_control_cols": [],
+            "derive_daily": {"enabled": True, "distribution": "uniform"},
+            "aggregate_to_weekly": {"enabled": True, "week_start": "MON"},
+            "processed_date_col": "date",
+            "processed_target_col": "sales",
+            "processed_channel_cols": ["mdsp_tv", "mdsp_social"],
+            "processed_control_cols": [],
+        },
+    }
+
+    artifacts = run_data_pipeline(config=cfg, project_root=tmp_path)
+    weekly_model = pd.read_parquet(artifacts.weekly_model_parquet)
+
+    assert "hldy_1" in weekly_model.columns
+    assert "hldy_2" in weekly_model.columns
