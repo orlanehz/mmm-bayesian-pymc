@@ -118,6 +118,27 @@ En pratique, l'effet total prédit est une somme:
 - effet saisonnalité,
 - bruit résiduel (`sigma`).
 
+### 4.3 Scénarios, courbe de réponse et uplift (exemple concret)
+Idée:
+- la courbe de réponse convertit un niveau de spend en contribution attendue,
+- un scénario modifie le spend (ex: `+20%` sur un canal),
+- l'uplift mesure le gain incrémental vs baseline.
+
+Formule:
+- `uplift = y_pred(scenario) - y_pred(baseline)`
+
+Exemple simple (1 semaine):
+- baseline: spend TV = `100`, contribution média prédite = `30`, ventes prédites = `130`
+- scénario S1: spend TV = `120` (`+20%`)
+- via la courbe de réponse (avec saturation), contribution TV passe de `30` à `34` (pas `36`, car rendements décroissants)
+- ventes prédites scénario = `134`
+- uplift = `134 - 130 = +4`
+
+Interprétation:
+- `+20%` de budget TV apporte `+4` ventes incrémentales dans ce contexte,
+- le gain marginal est plus faible à haut niveau de spend (effet saturation),
+- on compare plusieurs scénarios pour arbitrer l'allocation budgétaire.
+
 ## 5. Configuration (`configs/base.yaml`)
 Sections principales:
 - `paths`: emplacements data/artifacts
