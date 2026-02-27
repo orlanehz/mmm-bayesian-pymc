@@ -1,0 +1,13 @@
+project:
+  name: mmm-bayesian-pymc
+
+paths:
+  raw_data: data/raw
+  processed_data: data/processed
+  artifacts: artifacts
+
+model:
+  target: sales
+  date_col: date
+  channel_cols: []
+  control_cols: []

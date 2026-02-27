@@ -1,0 +1,1 @@
+"""Définition du modèle PyMC."""

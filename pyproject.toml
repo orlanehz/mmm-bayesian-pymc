@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "mmm-bayesian-pymc"
+version = "0.1.0"
+description = "MMM Bayésien avec PyMC et industrialisation"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{ include = "mmm", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+pandas = "^2.2.0"
+numpy = "^1.26.0"
+scipy = "^1.12.0"
+matplotlib = "^3.8.0"
+arviz = "^0.17.0"
+pymc = "^5.13.0"
+pyyaml = "^6.0.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-cov = "^5.0.0"
+ruff = "^0.5.0"
+black = "^24.0.0"
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["poetry-core>=1.8.0"]
+build-backend = "poetry.core.masonry.api"
